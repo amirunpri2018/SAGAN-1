@@ -12,11 +12,15 @@ class SAGAN(object):
         self.min_channels = min_channels
         self.max_channels = max_channels
 
+        def log2(x): return 0 if (x == 1).all() else 1 + log2(x >> 1)
+
+        self.max_depth = log2(self.max_resolution // self.min_resolution)
+
     def generator(self, latents, labels, training, name="ganerator", reuse=None):
 
-        def resolution(depth): return self.max_resolution >> depth
+        def resolution(depth): return self.min_resolution << depth
 
-        def channels(depth): return min(self.max_channels, self.min_channels << depth)
+        def channels(depth): return min(self.max_channels, self.min_channels << (self.max_depth - depth))
 
         def residual_block(inputs, depth):
             ''' A single block for ResNet v2, without a bottleneck.
@@ -81,16 +85,12 @@ class SAGAN(object):
             inputs += shortcut
             return inputs
 
-        def log2(x): return 0 if (x == 1).all() else 1 + log2(x >> 1)
-
-        max_depth = log2(self.max_resolution // self.min_resolution)
-
         with tf.variable_scope(name, reuse=reuse):
 
             with tf.variable_scope("dense"):
                 inputs = dense(
                     inputs=latents,
-                    units=channels(max_depth) * resolution(max_depth).prod(),
+                    units=channels(0) * resolution(0).prod(),
                     use_bias=False,
                     weight_initializer=tf.initializers.he_normal(),
                     bias_initializer=tf.initializers.zeros(),
@@ -98,10 +98,10 @@ class SAGAN(object):
                 )
             inputs = tf.reshape(
                 tensor=inputs,
-                shape=[-1, channels(max_depth), *resolution(max_depth)]
+                shape=[-1, channels(0), *resolution(0)]
             )
 
-            for depth in range(max_depth // 2, max_depth)[::-1]:
+            for depth in range(1, self.max_depth // 2):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -113,7 +113,7 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(max_depth // 2)[::-1]:
+            for depth in range(self.max_depth // 2, self.max_depth + 1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -139,9 +139,9 @@ class SAGAN(object):
 
     def discriminator(self, images, labels, training, name="dicriminator", reuse=None):
 
-        def resolution(depth): return self.max_resolution >> depth
+        def resolution(depth): return self.min_resolution << depth
 
-        def channels(depth): return min(self.max_channels, self.min_channels << depth)
+        def channels(depth): return min(self.max_channels, self.min_channels << (self.max_depth - depth))
 
         def residual_block(inputs, depth):
             inputs = tf.nn.relu(inputs)
@@ -150,7 +150,7 @@ class SAGAN(object):
             with tf.variable_scope("projection_shortcut"):
                 shortcut = conv2d(
                     inputs=inputs,
-                    filters=channels(depth + 1),
+                    filters=channels(depth - 1),
                     kernel_size=[1, 1],
                     use_bias=False,
                     weight_initializer=tf.initializers.he_normal(),
@@ -172,7 +172,7 @@ class SAGAN(object):
             with tf.variable_scope("conv_2nd"):
                 inputs = conv2d(
                     inputs=inputs,
-                    filters=channels(depth + 1),
+                    filters=channels(depth - 1),
                     kernel_size=[3, 3],
                     use_bias=True,
                     weight_initializer=tf.initializers.he_normal(),
@@ -183,16 +183,12 @@ class SAGAN(object):
             inputs += shortcut
             return inputs
 
-        def log2(x): return 0 if (x == 1).all() else 1 + log2(x >> 1)
-
-        max_depth = log2(self.max_resolution // self.min_resolution)
-
         with tf.variable_scope(name, reuse=reuse):
 
             with tf.variable_scope("conv"):
                 inputs = conv2d(
                     inputs=images,
-                    filters=channels(0),
+                    filters=channels(self.max_depth),
                     kernel_size=[1, 1],
                     use_bias=True,
                     weight_initializer=tf.initializers.he_normal(),
@@ -200,7 +196,7 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(max_depth // 2):
+            for depth in range(self.max_depth, self.max_depth // 2, -1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -212,12 +208,13 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(max_depth // 2, max_depth):
+            for depth in range(self.max_depth // 2, 0, -1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
             inputs = tf.nn.relu(inputs)
             inputs = tf.reduce_sum(inputs, axis=[2, 3])
+
             with tf.variable_scope("logits"):
                 logits = dense(
                     inputs=inputs,
@@ -240,4 +237,5 @@ class SAGAN(object):
                     keepdims=True
                 )
             inputs = logits + projections
+
             return inputs

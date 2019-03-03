@@ -37,8 +37,8 @@ with tf.Graph().as_default():
     gan = GAN(
         discriminator=pggan.discriminator,
         generator=pggan.generator,
-        real_input_fn=None,
-        fake_input_fn=None,
+        real_input_fn=lambda: (tf.zeros([1, 3, 256, 256]), tf.zeros([1, 10])),
+        fake_input_fn=lambda: (tf.zeros([1, 256]), tf.zeros([1, 10])),
         hyper_params=Param(
             discriminator_learning_rate=4e-4,
             discriminator_beta1=0.0,
