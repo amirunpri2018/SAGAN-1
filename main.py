@@ -14,7 +14,7 @@ from attrdict import AttrDict as Param
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_dir", type=str, default="sagan_model")
-parser.add_argument('--filenames', type=str, nargs="+", default=["nsynth_train.tfrecord"])
+parser.add_argument('--filenames', type=str, nargs="+")
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--total_steps", type=int, default=1000000)
 parser.add_argument("--train", action="store_true")
