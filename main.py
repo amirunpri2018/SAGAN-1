@@ -13,7 +13,7 @@ import pickle
 from dataset import celeba_input_fn
 from model import GAN
 from network import SAGAN
-from attrdict import AttrDict as Param
+from attrdict import Param
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_dir", type=str, default="sagan_model")
