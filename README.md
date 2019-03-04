@@ -1,1 +1,1 @@
-## TensorFlow implementation of "Self-Attention Generative Adversarial Networks"
+## TensorFlow implementation of ["Self-Attention Generative Adversarial Networks"](https://arxiv.org/pdf/1805.08318.pdf)
