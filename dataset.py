@@ -10,7 +10,7 @@ def celeba_input_fn(filenames, batch_size, num_epochs, shuffle, image_size):
         features = tf.parse_single_example(
             serialized=example,
             features={
-                "image": tf.FixedLenFeature([], dtype=tf.string),
+                "path": tf.FixedLenFeature([], dtype=tf.string),
                 "label": tf.FixedLenFeature([40], dtype=tf.int64),
             }
         )
@@ -19,7 +19,7 @@ def celeba_input_fn(filenames, batch_size, num_epochs, shuffle, image_size):
         image = tf.image.decode_jpeg(image, 3)
         image = tf.image.convert_image_dtype(image, tf.float32)
         image = tf.image.resize_images(image, image_size)
-        image = tf.transpose(image, [0, 3, 1, 2])
+        image = tf.transpose(image, [2, 0, 1])
         image = image * 2.0 - 1.0
 
         label = features["label"]
@@ -44,6 +44,6 @@ def celeba_input_fn(filenames, batch_size, num_epochs, shuffle, image_size):
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.prefetch(buffer_size=1)
 
-    iterator = dataset.make_initializable_iterator()
+    iterator = dataset.make_one_shot_iterator()
 
     return iterator.get_next()
