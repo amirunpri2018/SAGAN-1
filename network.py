@@ -14,6 +14,7 @@ class SAGAN(object):
 
         def log2(x): return 0 if (x == 1).all() else 1 + log2(x >> 1)
 
+        self.min_depth = log2(self.min_resolution // self.min_resolution)
         self.max_depth = log2(self.max_resolution // self.min_resolution)
 
     def generator(self, latents, labels, training, name="ganerator", reuse=None):
@@ -90,7 +91,7 @@ class SAGAN(object):
             with tf.variable_scope("dense"):
                 inputs = dense(
                     inputs=latents,
-                    units=channels(0) * resolution(0).prod(),
+                    units=channels(self.min_depth) * resolution(self.min_depth).prod(),
                     use_bias=False,
                     weight_initializer=tf.initializers.he_normal(),
                     bias_initializer=tf.initializers.zeros(),
@@ -98,10 +99,10 @@ class SAGAN(object):
                 )
             inputs = tf.reshape(
                 tensor=inputs,
-                shape=[-1, channels(0), *resolution(0)]
+                shape=[-1, channels(self.min_depth), *resolution(self.min_depth)]
             )
 
-            for depth in range(1, self.max_depth // 2):
+            for depth in range(self.min_depth + 1, (self.min_depth + self.max_depth) // 2):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -113,7 +114,7 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(self.max_depth // 2, self.max_depth + 1):
+            for depth in range((self.min_depth + self.max_depth) // 2, self.max_depth + 1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -196,7 +197,7 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(self.max_depth, self.max_depth // 2, -1):
+            for depth in range(self.max_depth, (self.min_depth + self.max_depth) // 2, -1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 
@@ -208,7 +209,7 @@ class SAGAN(object):
                     apply_spectral_norm=True
                 )
 
-            for depth in range(self.max_depth // 2, 0, -1):
+            for depth in range((self.min_depth + self.max_depth) // 2, self.min_depth, -1):
                 with tf.variable_scope("residual_block_{}x{}".format(*resolution(depth))):
                     inputs = residual_block(inputs, depth)
 

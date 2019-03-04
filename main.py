@@ -33,7 +33,7 @@ with tf.Graph().as_default():
 
     tf.set_random_seed(0)
 
-    pggan = SAGAN(
+    sagan = SAGAN(
         min_resolution=[4, 4],
         max_resolution=[256, 256],
         min_channels=16,
@@ -41,8 +41,8 @@ with tf.Graph().as_default():
     )
 
     gan = GAN(
-        discriminator=pggan.discriminator,
-        generator=pggan.generator,
+        discriminator=sagan.discriminator,
+        generator=sagan.generator,
         real_input_fn=functools.partial(
             celeba_input_fn,
             filenames=args.filenames,
@@ -62,7 +62,7 @@ with tf.Graph().as_default():
             discriminator_learning_rate=4e-4,
             discriminator_beta1=0.0,
             discriminator_beta2=0.9,
-            generator_learning_rate=2e-4,
+            generator_learning_rate=1e-4,
             generator_beta1=0.0,
             generator_beta2=0.9
         ),

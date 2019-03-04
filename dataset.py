@@ -6,7 +6,7 @@ import os
 
 def celeba_input_fn(filenames, batch_size, num_epochs, shuffle, image_size):
 
-    def parse_example(self, example):
+    def parse_example(example):
         features = tf.parse_single_example(
             serialized=example,
             features={
@@ -14,12 +14,13 @@ def celeba_input_fn(filenames, batch_size, num_epochs, shuffle, image_size):
                 "label": tf.FixedLenFeature([40], dtype=tf.int64),
             }
         )
-        image = features["image"]
+
+        image = tf.read_file(features["path"])
         image = tf.image.decode_jpeg(image, 3)
         image = tf.image.convert_image_dtype(image, tf.float32)
-        image = image * 2.0 - 1.0
         image = tf.image.resize_images(image, image_size)
         image = tf.transpose(image, [0, 3, 1, 2])
+        image = image * 2.0 - 1.0
 
         label = features["label"]
         label = tf.cast(label, tf.int32)
