@@ -1,9 +1,9 @@
 ## SAGAN: TensorFlow implementation of "Self-Attention Generative Adversarial Networks"
 
-## Original paper 
+### Original paper 
 * [Self-Attention Generative Adversarial Networks](https://arxiv.org/pdf/1805.08318.pdf)
 
-## Based on following papers
+### Based on following papers
 * [Non-local Neural Networks](https://arxiv.org/pdf/1711.07971.pdf)
 * [Spectral Normalization for Generative Adversarial Networks](https://arxiv.org/pdf/1802.05957.pdf)
 * [cGANs with Projection Discriminator](https://arxiv.org/pdf/1802.05637.pdf)
