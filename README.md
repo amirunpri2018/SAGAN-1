@@ -1,4 +1,4 @@
-## SAGAN: TensorFlow implementation of Self-Attention Generative Adversarial Networks
+## SAGAN: TensorFlow implementation of "Self-Attention Generative Adversarial Networks"
 
 ## Original paper 
 * [Self-Attention Generative Adversarial Networks](https://arxiv.org/pdf/1805.08318.pdf)
